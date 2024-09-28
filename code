@@ -1,0 +1,91 @@
+import json
+
+class FeedbackSystem:
+    def _init_(self):
+        self.users = {}
+        self.products = {}
+
+    def create_account(self, username):
+        if username in self.users:
+            print("Account already exists. Please log in.")
+            return False
+        else:
+            self.users[username] = []
+            print(f"Account created for {username}.")
+            return True
+
+    def rate_product(self, username, product_name, rating):
+        if username not in self.users:
+            print("You need to create an account first.")
+            return
+        
+        if product_name not in self.products:
+            self.products[product_name] = {"ratings": [], "average_rating": 0}
+
+        self.products[product_name]["ratings"].append(rating)
+        self.update_average_rating(product_name)
+        self.users[username].append((product_name, rating))
+        print(f"{username} rated {product_name} with a score of {rating}.")
+
+    def update_average_rating(self, product_name):
+        ratings = self.products[product_name]["ratings"]
+        self.products[product_name]["average_rating"] = sum(ratings) / len(ratings)
+
+    def get_product_ranking(self):
+        ranked_products = sorted(self.products.items(), key=lambda x: x[1]["average_rating"], reverse=True)
+        return ranked_products
+
+    def display_rankings(self):
+        ranked_products = self.get_product_ranking()
+        print("Product Rankings:")
+        for product, info in ranked_products:
+            print(f"Product: {product}, Average Rating: {info['average_rating']:.2f}, Total Ratings: {len(info['ratings'])}")
+
+    def save_data(self):
+        with open("feedback_data.json", "w") as f:
+            json.dump({"users": self.users, "products": self.products}, f)
+        print("Data saved.")
+
+    def load_data(self):
+        try:
+            with open("feedback_data.json", "r") as f:
+                data = json.load(f)
+                self.users = data["users"]
+                self.products = data["products"]
+            print("Data loaded.")
+        except FileNotFoundError:
+            print("No previous data found.")
+
+def main():
+    system = FeedbackSystem()
+    system.load_data()
+
+    while True:
+        print("\n1. Create Account\n2. Rate Product\n3. Display Rankings\n4. Save Data\n5. Exit")
+        choice = input("Select an option: ")
+
+        if choice == '1':
+            username = input("Enter username: ")
+            system.create_account(username)
+
+        elif choice == '2':
+            username = input("Enter your username: ")
+            product_name = input("Enter product name: ")
+            rating = float(input("Enter your rating (0-5): "))
+            system.rate_product(username, product_name, rating)
+
+        elif choice == '3':
+            system.display_rankings()
+
+        elif choice == '4':
+            system.save_data()
+
+        elif choice == '5':
+            print("Exiting...")
+            break
+
+        else:
+            print("Invalid option. Please try again.")
+
+if _name_ == "_main_":
+    main()
